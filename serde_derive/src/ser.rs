@@ -530,20 +530,29 @@ fn serialize_externally_tagged_variant(
         Style::Newtype => {
             let field = &variant.fields[0];
             let mut field_expr = quote!(__field0);
+            let other = variant.attrs.other();
             if let Some(path) = field.attrs.serialize_with() {
                 field_expr = wrap_serialize_field_with(params, field.ty, path, &field_expr);
             }
 
             let span = field.original.span();
-            let func = quote_spanned!(span=> _serde::Serializer::serialize_newtype_variant);
-            quote_expr! {
-                #func(
-                    __serializer,
-                    #type_name,
-                    #variant_index,
-                    #variant_name,
-                    #field_expr,
-                )
+            // FIXME Add this for other variants
+            if other {
+                let func = quote_spanned!(span=> _serde::Serialize::serialize);
+                quote_expr! {
+                    #func(#field_expr, __serializer)
+                }
+            } else {
+                let func = quote_spanned!(span=> _serde::Serializer::serialize_newtype_variant);
+                quote_expr! {
+                    #func(
+                        __serializer,
+                        #type_name,
+                        #variant_index,
+                        #variant_name,
+                        #field_expr,
+                    )
+                }
             }
         }
         Style::Tuple => serialize_tuple_variant(

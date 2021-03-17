@@ -125,8 +125,11 @@ fn check_identifier(cx: &Ctxt, cont: &Container) {
                 }
             }
 
+            // FIXME this is incomplete
+            (_, Identifier::No, true, _) => {}
+
             // Variant with `other` attribute must be a unit variant.
-            (_, Identifier::Field, true, _) | (_, Identifier::No, true, _) => {
+            (_, Identifier::Field, true, _) => {
                 cx.error_spanned_by(
                     variant.original,
                     "#[serde(other)] must be on a unit variant",
